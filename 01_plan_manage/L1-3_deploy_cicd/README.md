@@ -210,4 +210,4 @@ az cognitiveservices account purge --name $ACCOUNT --resource-group $RG --locati
 
 ## 注意（揮発情報）
 - **モデル名/バージョン・SKU・API バージョン**は変動します。`list-models` と公式ドキュメントで都度確認。
-- `microsoft/ai-agent-evals` と `azd` の hosted agent CI/CD は**プレビュー**。
+- `microsoft/ai-agent-evals` は**プレビュー**です（hosted agent 自体は GA）。
