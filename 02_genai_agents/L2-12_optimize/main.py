@@ -6,8 +6,8 @@
 定量的な品質比較はこのコードには入れていない。L2-5 の評価器で baseline と revised を採点する。
 
 使い方:
-    python main.py              # .env の MODEL_DEPLOYMENT（既定 gpt-4.1-mini：推論しないモデル）
-    python main.py gpt-5.4 medium   # デプロイ名と推論の強さ（reasoning effort）を引数で差し替える
+    python main.py              # .env の MODEL_DEPLOYMENT（既定 gpt-5.1。推論の強さの既定が none なので推論しない）
+    python main.py gpt-5.1 medium   # デプロイ名と推論の強さ（reasoning effort）を引数で差し替える
 """
 
 import os
@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 PROJECT_ENDPOINT = os.getenv("PROJECT_ENDPOINT")
-MODEL = sys.argv[1] if len(sys.argv) > 1 else os.getenv("MODEL_DEPLOYMENT", "gpt-4.1-mini")
-# 推論の強さ（none / low / medium / high）。推論モデルにだけ渡す。推論しないモデルに渡すと 400 になる
+MODEL = sys.argv[1] if len(sys.argv) > 1 else os.getenv("MODEL_DEPLOYMENT", "gpt-5.1")
+# 推論の強さ（gpt-5.1 は none / low / medium / high）。使える値はモデルごとに違い、対応しない値を渡すと 400 になる
 EFFORT = sys.argv[2] if len(sys.argv) > 2 else None
 
 TASK = "新しい家計簿アプリの紹介文を書いて。"

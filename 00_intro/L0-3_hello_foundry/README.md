@@ -70,7 +70,7 @@ az rest --method get `
   --url "https://management.azure.com/subscriptions/$(az account show --query id -o tsv)/providers/Microsoft.CognitiveServices/quotaTiers?api-version=2026-05-01" `
   --query "value[].properties" -o table
 ```
-`CurrentTierName` に今のティアが出ます。**最下位ティア**（Free Tier / Tier 0）だった場合、既定クォータが付くのは `gpt-4.1-mini` / `gpt-5-mini` / `o4-mini` / `text-embedding-3-small` の4モデルだけです。その場合は以下の `gpt-5.4-nano` を `gpt-4.1-mini` に読み替えてください（`.env` の `MODEL_DEPLOYMENT` も同じ名前にします。手順・学習目的は変わりません）。
+`CurrentTierName` に今のティアが出ます。**最下位ティア**（Free Tier / Tier 0）だった場合、新しいサブスクリプションで使えるチャットモデルは `gpt-5-mini` だけです（表には `gpt-4.1-mini` と `o4-mini` もありますが、非推奨＝Deprecated で、新しい顧客はデプロイできません。詳しくは [FAQ.md](../../FAQ.md)）。その場合は以下の `gpt-5.4-nano` を `gpt-5-mini`（バージョン `2025-08-07`）に読み替えてください（`.env` の `MODEL_DEPLOYMENT` も同じ名前にします。手順・学習目的は変わりません。`gpt-5-mini` は推論してから答えるので、手順11の応答まで十数秒かかります）。
 
 > ⚠️ `quotaTiers` の api-version は更新が速く、通る値が入れ替わります（2026-09-23 実測：`2026-05-01` は通り、`2023-05-01` や `2026-09-01` は `InvalidResourceType` の404）。404 のエラーメッセージに「サポートされる api-version の一覧」が出るので、その中の値に差し替えてください。
 
@@ -190,7 +190,7 @@ python main.py
 - **`403`**：手順8の **Foundry User** ロールが付いているか確認（付けた直後は反映に数分かかることがある）。
 - **`404`（モデルが見つからない）**：`.env` の `MODEL_DEPLOYMENT` は**カタログ名ではなくデプロイ名**。実際のデプロイ名と一致しているか確認。
 - **`az cognitiveservices account create` が `(InsufficientQuota)` で失敗**：モデルのTPMではなく**リソース作成レベルの別クォータ**です。無料試用版・学生サブスクリプションで起きやすく、従量課金への切り替えかサポートリクエストが必要です。
-- **`insufficient quota` でデプロイできない**：手順2のクォータティア確認に戻り、`gpt-4.1-mini` 等の最下位ティアで使えるモデルに読み替えてください。
+- **`insufficient quota` でデプロイできない**：手順2のクォータティア確認に戻り、最下位ティアで使える `gpt-5-mini` に読み替えてください。
 
 ## 後片付け
 ここで作ったリソースグループ・Foundry リソース・プロジェクトは、**講座の最後まで共通で使います**。消さずに残しておいてください（Standard デプロイは呼び出さない限り課金されません）。学習を長く中断する場合や、講座を終えて完全に片付ける場合だけ、次を実行します：

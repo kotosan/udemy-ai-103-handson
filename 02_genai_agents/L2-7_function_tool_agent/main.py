@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 PROJECT_ENDPOINT = os.getenv("PROJECT_ENDPOINT")
-MODEL_DEPLOYMENT = os.getenv("MODEL_DEPLOYMENT", "gpt-4.1-mini")
+MODEL_DEPLOYMENT = os.getenv("MODEL_DEPLOYMENT", "gpt-5.1")
 AGENT_NAME = "inventory-agent"
 MAX_TURNS = 5  # ツール呼び出しの往復の上限（無限ループ防止）
 

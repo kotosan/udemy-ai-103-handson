@@ -10,12 +10,14 @@
 
 **原因**：**クォータティア**です。設定ミスではありません。Foundry はサブスクリプションごとに等級（ティア）を割り当てており、**そのティアの表に載っているモデルにしか既定のクォータが付きません**。作りたてのサブスクリプションは最下位ティア（Free Tier ／ Tier 0）になりやすく、そこでクォータが付くのは次の4つだけです。
 
-| モデル | 既定クォータ |
-|---|---|
-| `gpt-4.1-mini` | 200,000 TPM |
-| `gpt-5-mini` | 500,000 TPM |
-| `o4-mini` | 100,000 TPM |
-| `text-embedding-3-small` | 1,000,000 TPM |
+| モデル | 既定クォータ | 新しいサブスクリプションで使えるか |
+|---|---|---|
+| `gpt-4.1-mini` | 200,000 TPM | 使えない（非推奨＝Deprecated。退役は 2027-04-14） |
+| `gpt-5-mini` | 500,000 TPM | **使える** |
+| `o4-mini` | 100,000 TPM | 使えない（非推奨＝Deprecated。2026-11-19 に退役） |
+| `text-embedding-3-small` | 1,000,000 TPM | 使える（埋め込みモデル） |
+
+表には4つ載っていますが、`gpt-4.1-mini` と `o4-mini` は**非推奨（Deprecated）**です。Microsoft Learn のモデルのライフサイクルでは、Deprecated のモデルは**既存の顧客だけ**が新しいデプロイを作れます。既存の顧客かどうかは**サブスクリプション単位**（そのサブスクリプションで、そのモデルのバージョンをデプロイしたことがあるか）で決まり、同じテナントの新しいサブスクリプションには引き継がれません。つまり、**作りたてのサブスクリプションで使えるチャットモデルは `gpt-5-mini` だけ**です。
 
 `gpt-5.4` や `gpt-5.4-nano` のような最新世代は、最下位ティアでは**表に行が無い＝割り当てゼロ**です。ポータルの **Manage → Quota** を開いても、そのモデルの行自体が存在しません（「残り0」ではありません）。
 
@@ -30,7 +32,7 @@ az rest --method get `
 
 **対処（上から順に試してください）**
 
-1. **使えるモデルに読み替える（推奨）**。各レッスンはモデル名を `.env` の環境変数に出しているので、値を変えるだけで動きます。大きいモデル役なら `gpt-5-mini`、軽量モデル役なら `gpt-4.1-mini` が置き換えになります。
+1. **使えるモデルに読み替える（推奨）**。各レッスンはモデル名を `.env` の環境変数に出しているので、値を変えるだけで動きます。読み替え先は `gpt-5-mini` です（大きいモデル役も軽量モデル役も同じ）。関数ツールを使うレッスンなど、`gpt-5-mini` では動かないレッスンもあります（次の 1-2 を参照）。
 2. **クォータ増加を申請する**。[申請フォーム](https://aka.ms/oai/stuquotarequest) から、サブスクリプション・リージョン・モデル名・希望 TPM を明記します（サブスクリプションの **Owner** か **Contributor** が必要）。申請は「既存クォータを実際に使っている顧客」が優先されるので、**1 で動かしてから出すと通りやすい**です。
 3. **待つ**。ティアは消費実績と支払い履歴に応じて自動昇格します。
 
@@ -42,51 +44,72 @@ az rest --method get `
 | 容量（TPM）を最小にして再試行 | 割り当てがゼロなら不可 |
 | デプロイタイプを変える | プールは別建てになりますが、最下位ティアには対象モデルの行がありません |
 
-> ℹ️ `gpt-4.1-mini` は非推奨（Deprecated）ですが、廃止予定は **2027-04-14** なので現時点では使えます。ただし `gpt-4.1-nano` は **2026-10-14** と早いので使わないでください。最新の予定は [Model retirement schedule](https://learn.microsoft.com/azure/foundry/openai/concepts/model-retirement-schedule) で確認できます。
+> ℹ️ `gpt-4.1` / `gpt-4.1-mini` / `gpt-4.1-nano` / `gpt-4o` / `gpt-4o-mini` も非推奨（Deprecated）です。`gpt-4.1` 系の退役は **2027-04-14** ですが、退役の前でも、そのサブスクリプションで以前にデプロイしたことが無ければ新しくデプロイできません。最新の予定は [Model retirement schedule](https://learn.microsoft.com/azure/foundry/openai/concepts/model-retirement-schedule)、ライフサイクルの意味は [Foundry Models lifecycle and support policy](https://learn.microsoft.com/azure/foundry/openai/concepts/model-retirements) で確認できます。
 
 ---
 
 ## 1-2. レッスン別：最下位ティアで動くか一覧
 
-**そのまま動くレッスン（読み替え不要）**
+**モデルを使わないレッスン（読み替え不要）**
 
-`L1-2` / `L1-3` / `L2-1` / `L2-2` / `L2-3` / `L2-4` / `L2-6` / `L2-7` / `L2-8` / `L2-9` / `L2-10` / `L2-11` / `L2-12` / `L4-1` / `L4-3` / `L4-4`
+`L1-2` / `L3-4` / `L5-2`
 
-**`.env` のモデル名を読み替えれば動くレッスン**
+**`.env` のモデル名を `gpt-5-mini` に読み替えれば動くレッスン**
 
-各レッスンの `.env.sample` に、コメントアウトした状態でフォールバック先を書いてあります。コメントを外すだけです。
+`.env.sample` にフォールバックをコメントで書いてあるレッスンは、コメントを外すだけです。書いていないレッスンは、値を `gpt-5-mini` に書き換えます。`gpt-5-mini` のデプロイは、L1-1 の README「クォータ不足でモデルをデプロイできないとき」の対処1のコマンドで作ります。「講座で確認」の列は、2026-10-23 に `gpt-5-mini` で実行して確かめたレッスンです。
 
-| レッスン | 既定 | 読み替え先 |
-|---|---|---|
-| `00_intro/L0-3_hello_foundry` | `gpt-5.4-nano` | `gpt-4.1-mini` |
-| `01_plan_manage/L1-1_model_selection` | `gpt-5.4` / `gpt-5.4-nano` | `gpt-5-mini` / `gpt-4.1-mini` |
-| `01_plan_manage/L1-4_quota_cost` | `gpt-5.4` | `gpt-5-mini` |
-| `01_plan_manage/L1-5_keyless_security` | `gpt-5.4` | `gpt-5-mini` |
-| `01_plan_manage/L1-6_observability_tracing` | `gpt-4.1` | `gpt-4.1-mini` |
-| `01_plan_manage/L1-7_responsible_ai` | `gpt-4.1` | `gpt-4.1-mini` |
-| `02_genai_agents/L2-5_evaluate_rag` | `gpt-4.1`（採点役） | `gpt-4.1-mini` |
-| `03_vision/L3-3_multimodal_understanding` | `gpt-4o` | `gpt-4.1-mini`（画像理解に対応） |
-| `04_text/L4-2_translation` | `gpt-5.1` | `gpt-4.1-mini` |
-| `05_info_extraction/L5-1_search_grounding` | `text-embedding-3-large` | `text-embedding-3-small`＋**次元を 1536 に** |
+| レッスン | 既定 | 読み替え先 | 講座で確認 | 補足 |
+|---|---|---|---|---|
+| `00_intro/L0-3_hello_foundry` | `gpt-5.4-nano` | `gpt-5-mini` | 済 | 推論してから答えるので、応答まで十数秒かかる |
+| `01_plan_manage/L1-1_model_selection` | `gpt-5.4` / `gpt-5.4-nano` | `gpt-5-mini` / `gpt-5-mini` | 済 | 2つとも同じモデルになるので、大小の差は見られない（動画で確認） |
+| `01_plan_manage/L1-3_deploy_cicd` | `gpt-5.4-nano`（`deploy_model.azcli`・`main.bicep` でデプロイ） | `gpt-5-mini`（バージョン `2025-08-07`） | − | モデル名とバージョンの両方を書き換える |
+| `01_plan_manage/L1-4_quota_cost` | `gpt-5.4` | `gpt-5-mini` | − | |
+| `01_plan_manage/L1-5_keyless_security` | `gpt-5.4` | `gpt-5-mini` | − | |
+| `01_plan_manage/L1-6_observability_tracing` | `gpt-5.4` | `gpt-5-mini` | − | |
+| `01_plan_manage/L1-7_responsible_ai` | `gpt-5.4-nano` | `gpt-5-mini` | − | |
+| `02_genai_agents/L2-1_chat_app` | `gpt-5.4` | `gpt-5-mini` | − | |
+| `02_genai_agents/L2-2_file_search_rag` | `gpt-5.4` | `gpt-5-mini` | 済 | |
+| `02_genai_agents/L2-3_foundry_iq` | `gpt-5.4` | `gpt-5-mini` | − | |
+| `02_genai_agents/L2-4_multistep_tools` | `gpt-5.4` | `gpt-5-mini` | 済 | |
+| `02_genai_agents/L2-5_evaluate_rag` | `gpt-5.1`（採点役） | `gpt-5-mini` | 済 | `JUDGE_IS_REASONING_MODEL=true` のまま |
+| `02_genai_agents/L2-6_single_agent` | `gpt-5.4` | `gpt-5-mini` | 済 | |
+| `02_genai_agents/L2-8_mcp_tool` | `gpt-5.4` | `gpt-5-mini` | − | |
+| `02_genai_agents/L2-9_multi_agent` | `gpt-5.4` | `gpt-5-mini` | 済 | 実行時間は約2倍 |
+| `03_vision/L3-3_multimodal_understanding` | `gpt-5.4` | `gpt-5-mini` | − | 画像の入力に対応 |
+| `04_text/L4-1_text_analysis` | `gpt-5.4` | `gpt-5-mini` | 済 | |
+| `04_text/L4-3_speech_pipeline` | `gpt-5.4` | `gpt-5-mini` | − | |
+| `05_info_extraction/L5-1_search_grounding` | `gpt-5.4` ＋ `text-embedding-3-large` | `gpt-5-mini` ＋ `text-embedding-3-small`（**次元を 1536 に**） | − | |
 
-> ⚠️ **`gpt-4.1` と `gpt-4.1-mini` は別のモデル**です。最下位ティアにあるのは mini だけなので、`gpt-4.1` はデプロイできません。ここは見落としやすいところです。
->
 > ⚠️ **`L5-1` は次元数もセットで変えてください。** `3072` は `-large` 専用で、`-small` は最大 `1536` です。合わせないとインデックス作成が失敗します。既にインデックスを作っている場合は作り直しが必要です。
+>
+> ⚠️ `L4-4`（Voice Live）と `L5-3`（Content Understanding）は、使えるモデルをサービス側が決めています。`gpt-5-mini` で動くかは講座では確かめていません（`L5-3` は `set_defaults.py` が対応モデルの一覧を表示するので、そこに `gpt-5-mini` があるかを見てください。埋め込みの `text-embedding-3-large` も最下位ティアにはありません）。
+
+**Tier 1 以上（`gpt-5.1`）が必要なレッスン**
+
+| レッスン | 理由 |
+|---|---|
+| `02_genai_agents/L2-7_function_tool_agent` | エージェントに関数ツールを持たせる。Foundry Agent Service のツール対応表で、`gpt-5-mini` の Functions は No |
+| `02_genai_agents/L2-10_hitl` | 同上 |
+| `02_genai_agents/L2-11_tracing` | 同上 |
+| `02_genai_agents/L2-12_optimize` | `gpt-5.1` の推論の強さ `none`（推論しない）と `medium` を比べる。`gpt-5-mini` は `none` を選べず、`temperature` も 400 になる |
+
+`gpt-5.1` は Tier 1 以上の表にあります。ティアが上がるのを待つか、クォータ増加を申請してください（上の「対処」の 2・3）。
 
 **読み替え先が無いレッスン（クォータ申請が必要）**
 
 | レッスン | モデル | 理由 |
 |---|---|---|
 | `03_vision/L3-1_image_generation` | `gpt-image-2` | 最下位ティアに**画像生成モデルが1つも無い** |
-| `03_vision/L3-2_video_generation` | `sora-2` | 最下位ティアに**動画生成モデルが無い**。加えてプレビューで、提供リージョンは East US 2 / Sweden Central のみ。現行版（2025-12-08）は **2026-10-15 に廃止予定** |
+| `03_vision/L3-2_video_generation` | `sora-2` | 最下位ティアに**動画生成モデルが無い**。加えて `sora-2`（2025-12-08）は **2026-10-15 に退役済み（後継なし）**で、ティアに関係なく実行できない |
+| `04_text/L4-2_translation` の LLM 翻訳（②） | `gpt-5.4` | LLM 翻訳に使えるモデルは Translator が決めており、`gpt-5-mini` は `not supported` の 400 になる（講座の検証）。`.env` の `LLM_DEPLOYMENT=` を空にすると、① の NMT 翻訳だけ実行して ② はスキップする |
 
-この2つは差し替えでは回避できません。→ 次の項目へ
+`L3-1` と `L4-2` の②は、差し替えでは回避できません。→ 次の項目へ
 
 ---
 
 ## 1-3. 画像生成・動画生成が使えないとき（L3-1 / L3-2）
 
-上記2レッスンは、最下位ティアだと**モデルを差し替えても実行できません**。取れる道は2つです。
+上記のレッスンは、最下位ティアだと**モデルを差し替えても実行できません**（`L3-2` の `sora-2` は退役済みなので、ティアに関係なく実行できません。動画で学んでください）。取れる道は2つです。
 
 **① 動画を見て学ぶ（すぐできる）**
 
@@ -100,7 +123,7 @@ az rest --method get `
 - 記入するもの：サブスクリプションID・リージョン・モデル名（`gpt-image-2` など）・希望 TPM
 - 必要な権限：サブスクリプションの **Owner** または **Contributor**
 - コツ：申請は「**既存のクォータを実際に使っている顧客**」が優先されます。先に他のレッスンで実際に推論を回してから申請すると通りやすくなります
-- 動画生成（`sora-2`）はプレビューで、提供リージョンは East US 2 / Sweden Central のみです。廃止予定日（現行版は 2026-10-15）も含めて、申請前にカタログと [モデルの廃止スケジュール](https://learn.microsoft.com/azure/foundry/openai/concepts/model-retirement-schedule) を確認してください
+- 動画生成の `sora-2`（2025-12-08）は **2026-10-15 に退役済み（後継なし）**です。申請の前に、カタログと [モデルの廃止スケジュール](https://learn.microsoft.com/azure/foundry/openai/concepts/model-retirement-schedule) で、使えるモデルが残っているかを確認してください
 
 なお、ティアは消費実績と支払い履歴で自動的に上がります。講座を順に進めていれば、後半のレッスンに着手する頃には使えるようになっている可能性もあります。
 

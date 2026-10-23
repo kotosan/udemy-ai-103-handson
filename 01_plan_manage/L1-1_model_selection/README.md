@@ -59,7 +59,7 @@ az cognitiveservices account deployment create `
   --query "{name:name, state:properties.provisioningState}" -o table
 ```
 - `State` が `Succeeded` になればOKです。デプロイを置いておくだけでは課金されません（呼び出した分だけ）。
-- `insufficient quota` で失敗したら、下の「クォータ不足でモデルをデプロイできないとき」を見てください（`gpt-5-mini` と `gpt-4.1-mini` の組み合わせに読み替えます）。
+- `insufficient quota` で失敗したら、下の「クォータ不足でモデルをデプロイできないとき」を見てください（`gpt-5-mini` に読み替えます）。
 - `--model-version` は更新されます。通らないときは `az cognitiveservices model list --location japaneast --query "[?model.name=='gpt-5.4'].model.version" -o tsv` で現行の値を確認してください。
 
 ### 3. 2つのデプロイがそろったか確かめる
@@ -133,38 +133,34 @@ az rest --method get `
 
 **最下位ティアで既定クォータが付与されるのは次の4モデルだけ**です（すべて GlobalStandard）。
 
-| モデル | 既定クォータ |
-|---|---|
-| `gpt-4.1-mini` | 200,000 TPM |
-| `gpt-5-mini` | 500,000 TPM |
-| `o4-mini` | 100,000 TPM |
-| `text-embedding-3-small` | 1,000,000 TPM |
+| モデル | 既定クォータ | 新しいサブスクリプションで使えるか |
+|---|---|---|
+| `gpt-4.1-mini` | 200,000 TPM | 使えない（非推奨＝Deprecated） |
+| `gpt-5-mini` | 500,000 TPM | **使える** |
+| `o4-mini` | 100,000 TPM | 使えない（非推奨＝Deprecated。2026-11-19 に退役） |
+| `text-embedding-3-small` | 1,000,000 TPM | 使える（埋め込みモデル） |
 
-### 対処1：使えるモデルに差し替える（推奨）
-手順2の代わりに、最下位ティアでも既定クォータが付く2つのモデルをデプロイします（手順1の `$FOUNDRY` を使うので同じターミナルで実行）。
+`gpt-4.1-mini` と `o4-mini` は非推奨（Deprecated）で、そのサブスクリプションで以前にデプロイしたことが無い「新しい顧客」はデプロイできません。**作りたてのサブスクリプションで使えるチャットモデルは `gpt-5-mini` だけ**です（詳しくはリポジトリ直下の [FAQ.md](../../FAQ.md)）。
+
+### 対処1：使えるモデルに差し替える
+手順2の代わりに、最下位ティアでも既定クォータが付く `gpt-5-mini` をデプロイします（手順1の `$FOUNDRY` を使うので同じターミナルで実行）。
 ```powershell
 az cognitiveservices account deployment create `
   --name $FOUNDRY --resource-group rg-ai103 `
   --deployment-name gpt-5-mini --model-name gpt-5-mini --model-version "2025-08-07" `
   --model-format OpenAI --sku-capacity 10 --sku-name GlobalStandard `
   --query "{name:name, state:properties.provisioningState}" -o table
-az cognitiveservices account deployment create `
-  --name $FOUNDRY --resource-group rg-ai103 `
-  --deployment-name gpt-4.1-mini --model-name gpt-4.1-mini --model-version "2025-04-14" `
-  --model-format OpenAI --sku-capacity 10 --sku-name GlobalStandard `
-  --query "{name:name, state:properties.provisioningState}" -o table
 ```
-バージョンは更新されます。通らないときは `az cognitiveservices model list --location japaneast --query "[?model.name=='gpt-5-mini' || model.name=='gpt-4.1-mini'].{name:model.name,version:model.version}" -o table` で確認してください（2026-09-23 時点：gpt-5-mini は 2025-08-07、gpt-4.1-mini は 2025-04-14）。
+バージョンは更新されます。通らないときは `az cognitiveservices model list --location japaneast --query "[?model.name=='gpt-5-mini'].{name:model.name,version:model.version}" -o table` で確認してください（2026-10-23 時点：gpt-5-mini は 2025-08-07）。
 
-そのうえで、手順6の `.env` を次のように変更すれば、このハンズオンは**そのまま実施できます**。
+そのうえで、手順6の `.env` を次のように変更すれば、コードは**そのまま動きます**。
 
 ```
-MODEL_LARGE=gpt-5-mini      # 推論モデル。思考トークンを出すので遅く・消費が多い＝「大きい側」
-MODEL_SMALL=gpt-4.1-mini    # 非推論モデル。速く・安い＝「小さい側」
+MODEL_LARGE=gpt-5-mini
+MODEL_SMALL=gpt-5-mini
 ```
 
-推論モデル（思考のトークンも出力に数える）対非推論モデルになるため、**レイテンシとトークン数の差はむしろはっきり出ます**。既定の `gpt-5.4` と `gpt-5.4-nano` はどちらも推論モデルです。
-※ `gpt-4.1-mini` はライフサイクルが Legacy（廃止予定 2027-04-14。2026-09-19 確認）です。実行時点の廃止スケジュールを確認してください。
+ただし、**比べる2つが同じモデルになるので、大きいモデルと小さいモデルの差は見られません**（講座の検証では、同じモデルでも出力トークン数が 726〜1120 とばらつきました。`gpt-5-mini` は推論してから答えるので、推論のトークンも出力に数えます）。大小の比較は動画で確かめ、ティアが上がったら（対処2・3）既定の `gpt-5.4` と `gpt-5.4-nano` でもう一度実行してください。
 
 ### 対処2：クォータ増加を申請する
 [クォータ増加申請フォーム](https://aka.ms/oai/stuquotarequest) から、**サブスクリプション・リージョン・モデル名・希望 TPM** を明記して申請します（サブスクリプションの **Owner** または **Contributor** が必要）。承認されてもティアは変わらず、割り当てだけ増えます。反映まで最大15分。

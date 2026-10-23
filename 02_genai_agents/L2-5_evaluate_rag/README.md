@@ -18,7 +18,7 @@
 
 ## 前提
 - L0-3（Hello, Foundry）を終えていること（講座共通のリソースグループ `rg-ai103`・Foundry リソース・Foundry User ロール）。
-- 採点役（judge）に使う **`gpt-4.1-mini`** のデプロイがあること（手順2で確かめます。無い場合は下の「つまずき」の作り方）。
+- 採点役（judge）に使う **`gpt-5.1`** のデプロイがあること（手順2で確かめます。無い場合は下の「つまずき」の作り方）。
 - `az login` 済み ／ Python 3.11+
 - **講座共通のリソースは変更しません**。評価はローカルで行い、Azure 側に作るものはありません。
 
@@ -36,7 +36,7 @@
 | 6 | 評価データを見る |
 | 7 | 評価を実行する |
 | 8 | しきい値を上げて、pass/fail が変わるのを見る |
-| 9 | 採点役を推論モデルにすると失敗することを確かめる |
+| 9 | 推論モデルの設定を外すと失敗することを確かめる |
 | 10 | 後片付け（削除するものは無い） |
 
 > コマンドは **PowerShell** 用です（Codespaces のターミナルで `pwsh` を選ぶ／Windows の PowerShell／Mac・Linux は PowerShell 7 を入れて `pwsh`）。行末の `` ` `` は行の継続です。
@@ -61,9 +61,9 @@ az cognitiveservices account deployment list `
   --resource-group $RG `
   --query "[].{name:name, model:properties.model.name}" -o table
 ```
-`gpt-4.1-mini` の行があればOKです。`.env` の `JUDGE_DEPLOYMENT` に書くのは左の **name（デプロイ名）** です。
+`gpt-5.1` の行があればOKです。`.env` の `JUDGE_DEPLOYMENT` に書くのは左の **name（デプロイ名）** です。
 
-評価器（Groundedness など）は、採点役の LLM に「採点用のプロンプト」を送って1〜5の点を付けさせる **AI 支援の評価器**です。この採点役に、推論をしないモデルの `gpt-4.1-mini` を使います。採点役には推論モデルも使えますが、このレッスンの `main.py` は評価器を既定の設定（非推論モデル向けのパラメーター）で呼ぶためです（推論モデルにするとどうなるかは手順9）。
+評価器（Groundedness など）は、採点役の LLM に「採点用のプロンプト」を送って1〜5の点を付けさせる **AI 支援の評価器**です。この採点役に `gpt-5.1` を使います。`gpt-5.1` は**推論モデル**なので、`main.py` は評価器に `is_reasoning_model=True` を渡します（`.env` の `JUDGE_IS_REASONING_MODEL=true`）。これを渡さないとどうなるかは手順9で確かめます。
 
 ### 3. 採点役を呼ぶエンドポイントを表示する
 ```powershell
@@ -84,7 +84,7 @@ pip install -r requirements.txt
 cp .env.sample .env
 code .env
 ```
-開いた `.env` の `AZURE_OPENAI_ENDPOINT=` に手順3の URL を貼って保存します。`JUDGE_DEPLOYMENT=gpt-4.1-mini` は最初から入っています。
+開いた `.env` の `AZURE_OPENAI_ENDPOINT=` に手順3の URL を貼って保存します。`JUDGE_DEPLOYMENT=gpt-5.1` と `JUDGE_IS_REASONING_MODEL=true` は最初から入っています。
 > ⚠️ このレッスンのキー名は `AZURE_OPENAI_ENDPOINT` と `JUDGE_DEPLOYMENT` です。前のレッスンの `.env` を丸ごと写さないでください（`PROJECT_ENDPOINT` とは値も違います）。
 
 ### 6. 評価データを見る
@@ -105,24 +105,24 @@ python main.py
 ```
 3件 × 3つの評価器で、採点役を計9回呼びます（10〜40秒ほど。混み合うと `429` が返り、SDK が自動で待って再試行するので時間が延びます）。
 ```text
-採点役: gpt-4.1-mini ／ しきい値: 3（1〜5 のスコアがこれ以上なら pass）
+採点役: gpt-5.1（is_reasoning_model=True）／ しきい値: 3（1〜5 のスコアがこれ以上なら pass）
 評価中…（data.jsonl の各行を、3つの評価器がそれぞれ採点します）
 
 No  質問            根拠性       関連性       一貫性
-1   保証期間は？    4.0 pass     5.0 pass     4.0 pass
-2   対応OSは？      5.0 pass     5.0 pass     4.0 pass
-3   返品はできる？  2.0 fail     5.0 pass     4.0 pass
+1   保証期間は？    4.0 pass     4.0 pass     4.0 pass
+2   対応OSは？      5.0 pass     4.0 pass     4.0 pass
+3   返品はできる？  2.0 fail     4.0 pass     4.0 pass
 
-[No3 groundedness の理由] Let's think step by step: The context states that returns are possible within 30 days if the product is unopened. The response claims …
+[No3 groundedness の理由] Let's think step by step: The context says: '未開封なら30日以内は返品可能。' which means 'If unopened, returns are possible within 30 days.' The response says: 'いつ…
 
 === 集計（3件の平均と pass の割合） ===
 groundedness  平均 3.67 ／ pass の割合 0.67
-relevance     平均 5.00 ／ pass の割合 1.00
+relevance     平均 4.00 ／ pass の割合 1.00
 coherence     平均 4.00 ／ pass の割合 1.00
 ```
 - **スコア（1〜5）は採点役のモデルが付けます**。同じデータでも実行のたびに変わることがあるので、絶対値より「どの行が低いか」を見ます。
 - **pass/fail はしきい値で決まります**。既定のしきい値は 3 で、スコアが 3 以上なら pass です（採点役が pass/fail を決めているわけではありません）。
-- 3件目は、関連性は 5（質問には答えている）なのに、根拠性は低く fail です。**観点を分けて測る**ので、「答えてはいるが根拠が無い」ことが分かります。
+- 3件目は、関連性は pass（質問には答えている）なのに、根拠性は低く fail です。**観点を分けて測る**ので、「答えてはいるが根拠が無い」ことが分かります。
 - `[… の理由]` は、採点役が書いた採点の理由（`reason`）です。日本語のデータでも、理由は英語で返りました。画面に収まるよう、先頭 150 文字で切っています。
 - 集計の「pass の割合」は、しきい値以上だった件数の割合です（3件中2件なら 0.67）。
 
@@ -132,21 +132,23 @@ python main.py --threshold 5
 ```
 しきい値を 5 にすると、5点以外はすべて fail になります。**スコアは同じでも（実行ごとのぶれを除けば）、しきい値で pass/fail が変わる**ことが分かります。`--threshold` は `main.py` が評価器に渡す `threshold` です（コードは書き換えません）。
 
-### 9. 採点役を推論モデルにすると失敗することを確かめる
+### 9. 推論モデルの設定を外すと失敗することを確かめる
 ```powershell
-$env:JUDGE_DEPLOYMENT = "gpt-5.4"
+$env:JUDGE_IS_REASONING_MODEL = "false"
 python main.py
 ```
 すべての欄が `error` になり、採点役の API のエラーが表示されます。
 ```text
+採点役: gpt-5.1（is_reasoning_model=False）／ しきい値: 3（1〜5 のスコアがこれ以上なら pass）
+…
 採点に失敗した評価器があります（error の欄）。
   採点役の API のエラー: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.
 ```
-評価器は既定で、非推論モデル向けのパラメーター（`max_tokens` など）を付けて採点役を呼びます。推論モデルはこれを受け付けないので 400 になります。推論モデルを採点役にするときは、評価器に `is_reasoning_model=True` を渡す必要があります（このレッスンの `main.py` は渡していません）。Learn は、採点役に推論モデルも非推論モデルも使えるとしています。
+評価器は既定（`is_reasoning_model=False`）で、非推論モデル向けのパラメーター（`max_tokens` など）を付けて採点役を呼びます。推論モデルはこれを受け付けないので 400 になります。`is_reasoning_model=True` を渡すと、評価器は `max_tokens` を `max_completion_tokens` に替え、`temperature` なども外して呼びます。`gpt-5.1` は推論の強さの既定が `none`（推論しない）ですが、推論モデルなので `max_tokens` は受け付けません。Learn は、採点役に推論モデルも非推論モデルも使えるとしています。
 
-確かめたら、環境変数を元に戻します（`.env` の `gpt-4.1-mini` に戻ります）。
+確かめたら、環境変数を元に戻します（`.env` の `JUDGE_IS_REASONING_MODEL=true` に戻ります）。
 ```powershell
-Remove-Item Env:JUDGE_DEPLOYMENT
+Remove-Item Env:JUDGE_IS_REASONING_MODEL
 ```
 > 環境変数は `.env` より優先されます（`python-dotenv` は、すでにある環境変数を上書きしません）。
 
@@ -157,7 +159,7 @@ Remove-Item Env:JUDGE_DEPLOYMENT
 - **RAG の品質は観点を分けて測る**：Groundedness（回答が文脈に基づいているか）・Relevance（質問に答えているか）・Coherence（読みやすく筋が通っているか）。
 - **AI 支援の評価器は採点役の LLM が必要**（`model_config`）。スコアは 1〜5、既定のしきい値は 3、しきい値以上が pass（[RAG evaluators](https://learn.microsoft.com/azure/foundry/concepts/evaluation-evaluators/rag-evaluators)）。
 - **`evaluate()`** は、データセットの全行 × 全評価器をまとめて実行し、行ごとの結果（`rows`）と集計（`metrics`）を返す。
-- 採点役を推論モデルにするなら `is_reasoning_model=True`。
+- 採点役を推論モデル（`gpt-5.1` など）にするなら `is_reasoning_model=True`。渡さないと `max_tokens` が送られて 400 になる。
 - ポータルに結果を残したいときは、`evaluate()` に `azure_ai_project` を渡す（クラウドに記録する）。
 
 ## つまずき
@@ -166,9 +168,10 @@ Remove-Item Env:JUDGE_DEPLOYMENT
 | `AZURE_OPENAI_ENDPOINT が未設定です` | `.env` を作ったか、手順3の URL を貼ったか（手順5） |
 | `error` の欄と `401`／`403` | `az login` 済みか、Foundry リソースに推論できるロール（Foundry User など）があるか |
 | `error` の欄と `404`（DeploymentNotFound） | `JUDGE_DEPLOYMENT` がデプロイ名と一致しているか（手順2の name） |
-| `error` の欄と `400` の `max_tokens` | 採点役が推論モデルになっている（手順9）。`Remove-Item Env:JUDGE_DEPLOYMENT` と `.env` を確認 |
+| `error` の欄と `400` の `max_tokens` | 推論モデルの採点役に `is_reasoning_model=True` が渡っていない（手順9）。`Remove-Item Env:JUDGE_IS_REASONING_MODEL` と、`.env` の `JUDGE_IS_REASONING_MODEL=true` を確認 |
 | 時間がかかる | 採点役の呼び出しが `429` で待たされている。SDK が自動で再試行するので待つ |
-| `gpt-4.1-mini` のデプロイが無い | 次のコマンドで作ります（課金は使ったトークン分だけ）。`az cognitiveservices account deployment create --name $FOUNDRY --resource-group $RG --deployment-name gpt-4.1-mini --model-name gpt-4.1-mini --model-version 2025-04-14 --model-format OpenAI --sku-name GlobalStandard --sku-capacity 10` |
+| `gpt-5.1` のデプロイが無い | 次のコマンドで作ります（課金は使ったトークン分だけ）。`az cognitiveservices account deployment create --name $FOUNDRY --resource-group $RG --deployment-name gpt-5.1 --model-name gpt-5.1 --model-version 2025-11-13 --model-format OpenAI --sku-name GlobalStandard --sku-capacity 10` |
+| `gpt-5.1` が `insufficient quota` でデプロイできない | 最下位のクォータティアです（[FAQ.md](../../FAQ.md)）。`gpt-5-mini` をデプロイし、`.env` の `JUDGE_DEPLOYMENT=gpt-5-mini` にします（推論モデルなので `JUDGE_IS_REASONING_MODEL=true` のまま）。講座の検証では、`gpt-5-mini` でも3件目の根拠性だけが fail になりました |
 
 ## 後片付け
 - Azure 側に作ったものはありません（手順10）。講座共通のリソースもそのまま使います。

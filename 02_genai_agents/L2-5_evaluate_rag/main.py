@@ -6,6 +6,8 @@ Coherence（一貫性）の3つの評価器を data.jsonl にまとめて実行�
 
 - AI 支援の評価器は、採点役（judge）の LLM に「採点用のプロンプト」を送って点を付けさせる。
   採点役の設定が model_config。認証はキーレス（credential=DefaultAzureCredential()）。
+- 採点役が推論モデル（gpt-5.1 など）なら is_reasoning_model=True を渡す。
+  渡さないと、評価器は非推論モデル向けのパラメーター（max_tokens など）を送り、400 になる。
 - スコアは 1〜5。しきい値（既定 3）以上なら pass、未満なら fail。
   pass/fail を決めるのは採点役ではなく、このしきい値。
 """
@@ -51,7 +53,9 @@ def main() -> None:
     args = ap.parse_args()
 
     endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    deployment = os.getenv("JUDGE_DEPLOYMENT", "gpt-4.1-mini")
+    deployment = os.getenv("JUDGE_DEPLOYMENT", "gpt-5.1")
+    # 採点役が推論モデルか。True なら評価器が max_tokens・temperature を外し、max_completion_tokens で呼ぶ
+    reasoning = os.getenv("JUDGE_IS_REASONING_MODEL", "true").lower() == "true"
     if not endpoint:
         sys.exit("AZURE_OPENAI_ENDPOINT が未設定です。.env を確認してください。")
 
@@ -63,12 +67,16 @@ def main() -> None:
     }
     credential = DefaultAzureCredential()
     evaluators = {
-        "groundedness": GroundednessEvaluator(model_config, credential=credential, threshold=args.threshold),
-        "relevance": RelevanceEvaluator(model_config, credential=credential, threshold=args.threshold),
-        "coherence": CoherenceEvaluator(model_config, credential=credential, threshold=args.threshold),
+        "groundedness": GroundednessEvaluator(model_config, credential=credential, threshold=args.threshold,
+                                              is_reasoning_model=reasoning),
+        "relevance": RelevanceEvaluator(model_config, credential=credential, threshold=args.threshold,
+                                        is_reasoning_model=reasoning),
+        "coherence": CoherenceEvaluator(model_config, credential=credential, threshold=args.threshold,
+                                        is_reasoning_model=reasoning),
     }
 
-    print(f"採点役: {deployment} ／ しきい値: {args.threshold}（1〜5 のスコアがこれ以上なら pass）")
+    print(f"採点役: {deployment}（is_reasoning_model={reasoning}）／ しきい値: {args.threshold}"
+          "（1〜5 のスコアがこれ以上なら pass）")
     print("評価中…（data.jsonl の各行を、3つの評価器がそれぞれ採点します）")
     log = io.StringIO()
     try:

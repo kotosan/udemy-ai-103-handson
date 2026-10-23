@@ -16,7 +16,7 @@
 ## 前提
 - L0-3（Hello, Foundry）を終えていること（講座共通のリソースグループ `rg-ai103`・Foundry リソース・プロジェクト `ai103-project`・Foundry User ロール）。
 - `az login` 済み ／ Python 3.11+
-- エージェントに関数ツール（Functions）を持たせるので、**モデルは `gpt-4.1-mini`** を使います。Foundry Agent Service の「Tool support by region and model」（エージェントに持たせるツールの対応表）で、`gpt-4.1-mini` は Functions が Yes、`gpt-5.4` 系は No です。リージョンでも可否が分かれるので、講座の `japaneast` で使います。デプロイが無ければ手順2で作ります（デプロイ自体は無料。課金は使ったトークン分だけ）。
+- エージェントに関数ツール（Functions）を持たせるので、**モデルは `gpt-5.1`** を使います。Foundry Agent Service の「Tool support by region and model」（エージェントに持たせるツールの対応表）で、`gpt-5.1` は Functions が Yes、`gpt-5.4` 系と `gpt-5-mini` は No です。リージョンでも可否が分かれるので、講座の `japaneast` で使います。デプロイが無ければ手順2で作ります（デプロイ自体は無料。課金は使ったトークン分だけ）。最下位のクォータティア（Free Tier / Tier 0）では `gpt-5.1` をデプロイできないことがあります（[FAQ.md](../../FAQ.md)）。
 
 ## 進め方（コピペで実行できます）
 
@@ -25,7 +25,7 @@
 | 手順 | やること |
 |---|---|
 | 1 | 共通リソースの名前を変数に入れる |
-| 2 | `gpt-4.1-mini` のデプロイを確かめる（無ければ作る） |
+| 2 | `gpt-5.1` のデプロイを確かめる（無ければ作る） |
 | 3 | プロジェクトのエンドポイントを取得する |
 | 4 | 仮想環境を作って依存を入れる |
 | 5 | `.env` を用意する |
@@ -49,21 +49,21 @@ $FOUNDRY
 ```
 `ai103-foundry-<数字>` が表示されればOKです。
 
-### 2. `gpt-4.1-mini` のデプロイを確かめる（無ければ作る）
+### 2. `gpt-5.1` のデプロイを確かめる（無ければ作る）
 ```powershell
 az cognitiveservices account deployment list `
   --name $FOUNDRY `
   --resource-group $RG `
   --query "[].{name:name, model:properties.model.name}" -o table
 ```
-一覧に `gpt-4.1-mini` があればOKです。無ければ、次のコマンドでデプロイします（`gpt-4.1-mini  Succeeded` が出ればOK）。
+一覧に `gpt-5.1` があればOKです。無ければ、次のコマンドでデプロイします（`gpt-5.1  Succeeded` が出ればOK）。
 ```powershell
 az cognitiveservices account deployment create `
   --name $FOUNDRY `
   --resource-group $RG `
-  --deployment-name gpt-4.1-mini `
-  --model-name gpt-4.1-mini `
-  --model-version 2025-04-14 `
+  --deployment-name gpt-5.1 `
+  --model-name gpt-5.1 `
+  --model-version 2025-11-13 `
   --model-format OpenAI `
   --sku-name GlobalStandard `
   --sku-capacity 10 `
@@ -93,7 +93,7 @@ pip install -r requirements.txt
 cp .env.sample .env
 code .env
 ```
-開いた `.env` の `PROJECT_ENDPOINT=` に手順3のエンドポイントを貼って保存します。`MODEL_DEPLOYMENT=gpt-4.1-mini` は最初から入っています。
+開いた `.env` の `PROJECT_ENDPOINT=` に手順3のエンドポイントを貼って保存します。`MODEL_DEPLOYMENT=gpt-5.1` は最初から入っています。
 > ⚠️ 前のレッスンの `.env` を丸ごと写すと、`MODEL_DEPLOYMENT` が `gpt-5.4` のままになることがあります。
 
 ### 6. 在庫を聞く（関数が1回呼ばれる）
@@ -107,7 +107,7 @@ USER> 商品 X1 の在庫はいくつ？
 [ツール要求] get_inventory({'product_code': 'X1'})
 [実行] get_inventory -> {'product_code': 'X1', 'stock': 3}
 [応答2] function_call 0 件
-AI> 商品コード X1 の在庫は3個あります。
+AI> 商品コード X1 の在庫は 3 個です。
 会話とエージェントを削除しました（残り: 0 件）
 ```
 - `[ツール要求]` は、モデルが返した「この関数をこの引数で呼びたい」という依頼（`function_call`）です。**モデルは関数を実行しません**。
@@ -126,7 +126,7 @@ python main.py "商品 X1 と M27 の在庫を比べて。"
 [ツール要求] get_inventory({'product_code': 'M27'})
 [実行] get_inventory -> {'product_code': 'M27', 'stock': 12}
 [応答2] function_call 0 件
-AI> 商品コードX1の在庫は3個、M27の在庫は12個です。在庫はM27の方が多いです。
+AI> 商品X1は在庫3個、M27は在庫12個で、M27のほうが在庫数が多いです。
 ```
 同じ関数を、商品ごとに2回呼びました。1つの応答に2件まとめて並ぶ（並列の呼び出し）ことも、1件ずつ2往復になることもあります（モデルと、要求の `parallel_tool_calls` の設定で変わる）。どちらでも、`main.py` は `function_call` が出なくなるまでループするので最後まで答えます。「M27 の方が多い」という比較は、2つの結果を受け取ったモデルが書いたものです。
 
@@ -137,12 +137,12 @@ python main.py "商品 Z9 の在庫は？"
 ```text
 [ツール要求] get_inventory({'product_code': 'Z9'})
 [実行] get_inventory -> {'error': 'unknown product_code: Z9'}
-AI> 申し訳ありませんが、商品コードZ9の在庫情報は見つかりませんでした。…
+AI> 申し訳ありませんが、商品コード「Z9」は登録がなく在庫を取得できませんでした。…
 ```
 関数は例外で止まらず、`{"error": ...}` を**結果としてモデルに返します**。モデルはそれを読んで「見つからない」と説明できます。モデルが関数を呼ばずに聞き返すこともあります。
 
 ### 9. 後片付けを確かめる
-手順6・8の最後の行 `会話とエージェントを削除しました（残り: 0 件）` が確認です（手順7も、最後まで待てば同じ行が出ます）。`main.py` は `finally` で会話とエージェントの版を削除し、同じ名前のエージェントが残っていないかを数えて表示します。`gpt-4.1-mini` のデプロイは後続のレッスンでも使うので残します。
+手順6・8の最後の行 `会話とエージェントを削除しました（残り: 0 件）` が確認です（手順7も、最後まで待てば同じ行が出ます）。`main.py` は `finally` で会話とエージェントの版を削除し、同じ名前のエージェントが残っていないかを数えて表示します。`gpt-5.1` のデプロイは後続のレッスンでも使うので残します。
 
 ## ポイント（試験の論点）
 - **`FunctionTool` はスキーマの宣言**で、関数の実体ではありません。モデルは宣言（名前・説明・引数の形）だけを見て、呼ぶかどうかと引数を決めます。**実行するのはアプリ**です（組み込みツールの Code Interpreter や File Search は Foundry 側で実行される、という対比）。
@@ -161,9 +161,9 @@ AI> 申し訳ありませんが、商品コードZ9の在庫情報は見つか�
 | `401`/`403` | `az login` 済みか、プロジェクトに **Foundry User** ロールがあるか |
 | `PROJECT_ENDPOINT が未設定です` | `.env` の作成・値の入力を確認 |
 | 最終回答が出ない | `function_call_output` を `call_id` 付きで返したか。続けて別の関数を呼びたがっていないか（このサンプルは `function_call` が無くなるまで、最大 `MAX_TURNS = 5` 回まわす） |
-| 関数が動かない・エラーになる | モデルがツール対応表で Functions に対応しているか（`gpt-5.4` 系は No） |
+| 関数が動かない・エラーになる | モデルがツール対応表で Functions に対応しているか（`gpt-5.4` 系と `gpt-5-mini` は No） |
 
 ## 後片付け
 - エージェントと会話は実行のたびに `finally` で削除されます（手順9）。在庫はモックの辞書なので後片付け不要です。
-- `gpt-4.1-mini` のデプロイは後続のレッスンでも使うので残します。デプロイ自体は課金されません（Standard 系は使ったトークン分だけ）。
+- `gpt-5.1` のデプロイは後続のレッスンでも使うので残します。デプロイ自体は課金されません（Standard 系は使ったトークン分だけ）。
 - レッスンフォルダーの `.venv` と `.env` は、不要になったら消してかまいません（`.env` はコミットされません）。

@@ -16,7 +16,7 @@
 ## 前提
 - L0-3（Hello, Foundry）を終えていること（講座共通のリソースグループ `rg-ai103`・Foundry リソース・プロジェクト `ai103-project`・Foundry User ロール）。
 - `az login` 済み ／ Python 3.11+
-- エージェントに関数ツール（Functions）を持たせるので、**モデルは `gpt-4.1-mini`** を使います。Foundry Agent Service の「Tool support by region and model」（エージェントに持たせるツールの対応表）で、`gpt-4.1-mini` は Functions が Yes、`gpt-5.4` 系は No です。リージョンでも可否が分かれるので、講座の `japaneast`（Function は yes）で使います。無ければ手順2でデプロイします（デプロイ自体は無料。課金は使ったトークン分だけ）。
+- エージェントに関数ツール（Functions）を持たせるので、**モデルは `gpt-5.1`** を使います。Foundry Agent Service の「Tool support by region and model」（エージェントに持たせるツールの対応表）で、`gpt-5.1` は Functions が Yes、`gpt-5.4` 系と `gpt-5-mini` は No です。リージョンでも可否が分かれるので、講座の `japaneast`（Function は yes）で使います。無ければ手順2でデプロイします（デプロイ自体は無料。課金は使ったトークン分だけ）。最下位のクォータティア（Free Tier / Tier 0）では `gpt-5.1` をデプロイできないことがあります（[FAQ.md](../../FAQ.md)）。
 
 ## 進め方（コピペで実行できます）
 
@@ -25,7 +25,7 @@
 | 手順 | やること |
 |---|---|
 | 1 | 共通リソースの名前を変数に入れる |
-| 2 | `gpt-4.1-mini` をデプロイする（あれば再利用） |
+| 2 | `gpt-5.1` をデプロイする（あれば再利用） |
 | 3 | プロジェクトのエンドポイントを取得する |
 | 4 | 仮想環境を作って依存を入れる |
 | 5 | `.env` を用意する |
@@ -49,20 +49,20 @@ $FOUNDRY
 ```
 `ai103-foundry-<数字>` が表示されればOKです。
 
-### 2. `gpt-4.1-mini` をデプロイする（あれば再利用）
+### 2. `gpt-5.1` をデプロイする（あれば再利用）
 ```powershell
 az cognitiveservices account deployment create `
   --name $FOUNDRY `
   --resource-group $RG `
-  --deployment-name gpt-4.1-mini `
-  --model-name gpt-4.1-mini `
-  --model-version 2025-04-14 `
+  --deployment-name gpt-5.1 `
+  --model-name gpt-5.1 `
+  --model-version 2025-11-13 `
   --model-format OpenAI `
   --sku-name GlobalStandard `
   --sku-capacity 10 `
   --query "{name:name, state:properties.provisioningState}" -o table
 ```
-`gpt-4.1-mini  Succeeded` が出ればOKです。すでに同じ名前のデプロイがあるときも、同じ設定なら `Succeeded` が返ります（後続のレッスンでも使うので、消さずに残します）。
+`gpt-5.1  Succeeded` が出ればOKです。すでに同じ名前のデプロイがあるときも、同じ設定なら `Succeeded` が返ります（後続のレッスンでも使うので、消さずに残します）。
 > 関数ツールをエージェントに持たせるときは、**モデル（とリージョン）がそのツールに対応しているか**を公式の対応表で先に確かめます。表で No のモデルは、動いたとしても前提にしません。
 
 ### 3. プロジェクトのエンドポイントを取得する
@@ -88,7 +88,7 @@ pip install -r requirements.txt
 cp .env.sample .env
 code .env
 ```
-開いた `.env` の `PROJECT_ENDPOINT=` に手順3のエンドポイントを貼って保存します。`MODEL_DEPLOYMENT=gpt-4.1-mini` は最初から入っています。
+開いた `.env` の `PROJECT_ENDPOINT=` に手順3のエンドポイントを貼って保存します。`MODEL_DEPLOYMENT=gpt-5.1` は最初から入っています。
 > ⚠️ このレッスンのキー名は `PROJECT_ENDPOINT` と `MODEL_DEPLOYMENT` です。前のレッスンの `.env` を丸ごと写すと、`MODEL_DEPLOYMENT` が `gpt-5.4` のままになります。
 
 ### 6. 削除を依頼して、承認する（`y`）
@@ -117,7 +117,7 @@ python main.py
 ```text
 [承認] delete_record({'record_id': '1002'}) を実行しますか？ (y/N): n
 [拒否] delete_record は実行しませんでした
-AI> レコード1002の削除は承認されていないため実行できません。
+AI> レコード1002の削除は人間オペレーターにより拒否されたため、実行できませんでした。
 
 DB の中身: {'1001': '山田', '1002': '佐藤'}
 ```
@@ -131,12 +131,12 @@ python main.py "レコード 1001 を見せて。"
 ```text
 [ツール要求] get_record({'record_id': '1001'})
 [自動実行] get_record -> {'record_id': '1001', 'name': '山田'}
-AI> レコード1001の名前は「山田」です。
+AI> レコード1001の内容: {"record_id": "1001", "name": "山田"}
 ```
 読み取りは低リスクなので、承認を挟まずに実行します。**リスクに応じて、人間の関与の度合い（oversight）を切り替える**のがこのサンプルの設計です。
 
 ### 9. 後片付けを確かめる
-手順6〜8の最後の行 `会話とエージェントを削除しました（残り: 0 件）` が確認です。`main.py` は `finally` で会話とエージェントの版を削除し、同じ名前のエージェントが残っていないかを数えて表示します。`gpt-4.1-mini` のデプロイは後続のレッスンでも使うので残します。
+手順6〜8の最後の行 `会話とエージェントを削除しました（残り: 0 件）` が確認です。`main.py` は `finally` で会話とエージェントの版を削除し、同じ名前のエージェントが残っていないかを数えて表示します。`gpt-5.1` のデプロイは後続のレッスンでも使うので残します。
 
 ## ポイント（試験の論点）
 - **deterministic HITL**：高リスクで不可逆な操作は、モデルではなく**オーケストレーター（アプリ）のコード**で承認を強制する。instructions で「削除の前には確認して」と書くだけでは決定論的ではない。
@@ -149,7 +149,7 @@ AI> レコード1001の名前は「山田」です。
 | 症状 | 対処 |
 |---|---|
 | 承認プロンプトが出ない | モデルが `delete_record` ではなく `get_record` を選んでいないか（依頼文を「削除して」など明確に）。`HIGH_RISK` の名前と関数名が一致しているか |
-| `DeploymentNotFound`（404） | `.env` の `MODEL_DEPLOYMENT` が手順2のデプロイ名 `gpt-4.1-mini` と一致しているか |
+| `DeploymentNotFound`（404） | `.env` の `MODEL_DEPLOYMENT` が手順2のデプロイ名 `gpt-5.1` と一致しているか |
 | `401`/`403` | `az login` 済みか、プロジェクトに **Foundry User** ロールがあるか |
 | `PROJECT_ENDPOINT が未設定です` | `.env` の作成・値の入力を確認 |
 | 往復が5回で止まる | `MAX_TURNS = 5`（無限ループ防止）。長い往復が必要なら値を増やす |
@@ -157,5 +157,5 @@ AI> レコード1001の名前は「山田」です。
 
 ## 後片付け
 - エージェントと会話は実行のたびに `finally` で削除されます（手順9）。データベースはインメモリなので後片付け不要です。
-- `gpt-4.1-mini` のデプロイは後続のレッスン（L2-7・L2-9 など）でも使うので残します。デプロイ自体は課金されません（Standard 系は使ったトークン分だけ）。
+- `gpt-5.1` のデプロイは後続のレッスン（L2-11・L2-12 など）でも使うので残します。デプロイ自体は課金されません（Standard 系は使ったトークン分だけ）。
 - レッスンフォルダーの `.venv` と `.env` は、不要になったら消してかまいません（`.env` はコミットされません）。

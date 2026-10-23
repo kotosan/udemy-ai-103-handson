@@ -150,7 +150,7 @@ japaneast (GlobalStandard): <上限-使用> 利用可能
 | `check_quota.py` で 403 | サブスクリプションに **Reader** 以上（または **Cognitive Services Usages Reader**）を付与 |
 | `AZURE_SUBSCRIPTION_ID が未設定です` | 手順1を**同じターミナル**で実行したか確認（別ターミナルでは環境変数が消えます） |
 | `limit > 0` の行が出ない | `QUOTA_LOCATION` が共通リソースのリージョン（`japaneast`）か確認 |
-| 使いたいモデルの行がそもそも無い／`insufficient quota` でデプロイできない | **クォータティア**が原因。最下位ティア（Free Tier / Tier 0）では `gpt-4.1-mini` / `gpt-5-mini` / `o4-mini` / `text-embedding-3-small` 以外は割り当てゼロ。`.env.sample` のフォールバック（`gpt-5-mini`）に読み替える。**リージョン変更では解決しない** → 詳細はリポジトリ直下の [`FAQ.md`](../../FAQ.md) |
+| 使いたいモデルの行がそもそも無い／`insufficient quota` でデプロイできない | **クォータティア**が原因。最下位ティア（Free Tier / Tier 0）では `gpt-4.1-mini` / `gpt-5-mini` / `o4-mini` / `text-embedding-3-small` 以外は割り当てゼロ（`gpt-4.1-mini` と `o4-mini` は非推奨＝Deprecated で、新しいサブスクリプションはデプロイできない）。`.env.sample` のフォールバック（`gpt-5-mini`）に読み替える。**リージョン変更では解決しない** → 詳細はリポジトリ直下の [`FAQ.md`](../../FAQ.md) |
 | `model not found` | `MODEL_DEPLOYMENT` が**デプロイ名**と一致しているか（カタログ名でなくデプロイ名） |
 | 429 が再現しない | 正常。クォータ超過時に自動再試行される形であることを確認する目的 |
 | ティアが取得できない | `quotaTiers` はプレビュー API。取得できなくても後続の確認は続行される |
