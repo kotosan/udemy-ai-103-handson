@@ -59,7 +59,7 @@ az cognitiveservices account deployment create `
   --query "{name:name, state:properties.provisioningState}" -o table
 ```
 - `State` が `Succeeded` になればOKです。デプロイを置いておくだけでは課金されません（呼び出した分だけ）。
-- `insufficient quota` で失敗したら、下の「クォータ不足でモデルをデプロイできないとき」を見てください（`gpt-5-mini` に読み替えます）。
+- `insufficient quota` で失敗したら、下の「クォータ不足でモデルをデプロイできないとき」を見てください（最下位ティアでは、このレッスンの比較は動画で確かめます）。
 - `--model-version` は更新されます。通らないときは `az cognitiveservices model list --location japaneast --query "[?model.name=='gpt-5.4'].model.version" -o tsv` で現行の値を確認してください。
 
 ### 3. 2つのデプロイがそろったか確かめる
@@ -142,29 +142,22 @@ az rest --method get `
 
 `gpt-4.1-mini` と `o4-mini` は非推奨（Deprecated）で、そのサブスクリプションで以前にデプロイしたことが無い「新しい顧客」はデプロイできません。**作りたてのサブスクリプションで使えるチャットモデルは `gpt-5-mini` だけ**です（詳しくはリポジトリ直下の [FAQ.md](../../FAQ.md)）。
 
-### 対処1：使えるモデルに差し替える
-手順2の代わりに、最下位ティアでも既定クォータが付く `gpt-5-mini` をデプロイします（手順1の `$FOUNDRY` を使うので同じターミナルで実行）。
-```powershell
-az cognitiveservices account deployment create `
-  --name $FOUNDRY --resource-group rg-ai103 `
-  --deployment-name gpt-5-mini --model-name gpt-5-mini --model-version "2025-08-07" `
-  --model-format OpenAI --sku-capacity 10 --sku-name GlobalStandard `
-  --query "{name:name, state:properties.provisioningState}" -o table
-```
-バージョンは更新されます。通らないときは `az cognitiveservices model list --location japaneast --query "[?model.name=='gpt-5-mini'].{name:model.name,version:model.version}" -o table` で確認してください（2026-10-23 時点：gpt-5-mini は 2025-08-07）。
+### 対処1：このレッスンは動画で確かめる
+最下位ティアで使えるチャットモデルは `gpt-5-mini` の1つだけなので、**大小の2つのモデルをそろえられず、このレッスンの比較は実行できません**（同じモデルを2回呼んでも、大小の差は比べられません）。手順2〜7は省き、大小の比較は動画で確かめてください。コードの読み解きは、手元の `main.py` を開いて動画と一緒に進められます。ティアが上がったら（対処2・3）、手順2から実行してください。
 
-そのうえで、手順6の `.env` を次のように変更すれば、コードは**そのまま動きます**。
-
-```
-MODEL_LARGE=gpt-5-mini
-MODEL_SMALL=gpt-5-mini
-```
-
-ただし、**比べる2つが同じモデルになるので、大きいモデルと小さいモデルの差は見られません**（講座の検証では、同じモデルでも出力トークン数が 726〜1120 とばらつきました。`gpt-5-mini` は推論してから答えるので、推論のトークンも出力に数えます）。大小の比較は動画で確かめ、ティアが上がったら（対処2・3）既定の `gpt-5.4` と `gpt-5.4-nano` でもう一度実行してください。
+> ほかのレッスンで最下位ティアの代わりに使う `gpt-5-mini` は、次のコマンドでデプロイします（各レッスンの README と [FAQ.md](../../FAQ.md) から参照しています。手順1の `$FOUNDRY` を使うので同じターミナルで実行）。
+> ```powershell
+> az cognitiveservices account deployment create `
+>   --name $FOUNDRY --resource-group rg-ai103 `
+>   --deployment-name gpt-5-mini --model-name gpt-5-mini --model-version "2025-08-07" `
+>   --model-format OpenAI --sku-capacity 10 --sku-name GlobalStandard `
+>   --query "{name:name, state:properties.provisioningState}" -o table
+> ```
+> バージョンは更新されます。通らないときは `az cognitiveservices model list --location japaneast --query "[?model.name=='gpt-5-mini'].{name:model.name,version:model.version}" -o table` で確認してください（2026-10-23 時点：gpt-5-mini は 2025-08-07）。
 
 ### 対処2：クォータ増加を申請する
 [クォータ増加申請フォーム](https://aka.ms/oai/stuquotarequest) から、**サブスクリプション・リージョン・モデル名・希望 TPM** を明記して申請します（サブスクリプションの **Owner** または **Contributor** が必要）。承認されてもティアは変わらず、割り当てだけ増えます。反映まで最大15分。
-> 申請は「**既存クォータを実際に使っている顧客が優先**」されます。まず対処1で実際に推論を回してから申請すると通りやすくなります。
+> 申請は「**既存クォータを実際に使っている顧客が優先**」されます。ほかのレッスンで `gpt-5-mini` を実際に使ってから申請すると通りやすくなります。
 
 ### 対処3：待つ（自動昇格）
 ティアは**消費実績と支払い履歴に応じて自動的に昇格**します。講座を進めるうちに上位モデルも使えるようになります。

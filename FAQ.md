@@ -61,7 +61,6 @@ az rest --method get `
 | レッスン | 既定 | 読み替え先 | 講座で確認 | 補足 |
 |---|---|---|---|---|
 | `00_intro/L0-3_hello_foundry` | `gpt-5.4-nano` | `gpt-5-mini` | 済 | 推論してから答えるので、応答まで十数秒かかる |
-| `01_plan_manage/L1-1_model_selection` | `gpt-5.4` / `gpt-5.4-nano` | `gpt-5-mini` / `gpt-5-mini` | 済 | 2つとも同じモデルになるので、大小の差は見られない（動画で確認） |
 | `01_plan_manage/L1-3_deploy_cicd` | `gpt-5.4-nano`（`deploy_model.azcli`・`main.bicep` でデプロイ） | `gpt-5-mini`（バージョン `2025-08-07`） | − | モデル名とバージョンの両方を書き換える |
 | `01_plan_manage/L1-4_quota_cost` | `gpt-5.4` | `gpt-5-mini` | − | |
 | `01_plan_manage/L1-5_keyless_security` | `gpt-5.4` | `gpt-5-mini` | − | |
@@ -99,11 +98,12 @@ az rest --method get `
 
 | レッスン | モデル | 理由 |
 |---|---|---|
+| `01_plan_manage/L1-1_model_selection` | `gpt-5.4` / `gpt-5.4-nano` | 大小**2つ**のモデルを比べるレッスンだが、最下位ティアで使えるチャットモデルは `gpt-5-mini` の1つだけ。同じモデルを2回呼んでも大小の差は比べられないので、比較は動画で確かめる（README の対処1） |
 | `03_vision/L3-1_image_generation` | `gpt-image-2` | 最下位ティアに**画像生成モデルが1つも無い** |
 | `03_vision/L3-2_video_generation` | `sora-2` | 最下位ティアに**動画生成モデルが無い**。加えて `sora-2`（2025-12-08）は **2026-10-15 に退役済み（後継なし）**で、ティアに関係なく実行できない |
 | `04_text/L4-2_translation` の LLM 翻訳（②） | `gpt-5.4` | LLM 翻訳に使えるモデルは Translator が決めており、`gpt-5-mini` は `not supported` の 400 になる（講座の検証）。`.env` の `LLM_DEPLOYMENT=` を空にすると、① の NMT 翻訳だけ実行して ② はスキップする |
 
-`L3-1` と `L4-2` の②は、差し替えでは回避できません。→ 次の項目へ
+`L1-1`・`L3-1`・`L4-2` の②は、差し替えでは回避できません。→ 次の項目へ
 
 ---
 
