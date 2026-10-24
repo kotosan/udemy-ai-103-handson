@@ -25,14 +25,14 @@
 
 ```powershell
 az rest --method get `
-  --url "https://management.azure.com/subscriptions/$(az account show --query id -o tsv)/providers/Microsoft.CognitiveServices/quotaTiers?api-version=2025-10-01-preview"
+  --url "https://management.azure.com/subscriptions/$(az account show --query id -o tsv)/providers/Microsoft.CognitiveServices/quotaTiers?api-version=2026-05-01"
 ```
 
 `properties.currentTierName` に `Tier 1` などが返ります。
 
 **対処（上から順に試してください）**
 
-1. **使えるモデルに読み替える（推奨）**。各レッスンはモデル名を `.env` の環境変数に出しているので、値を変えるだけで動きます。読み替え先は `gpt-5-mini` です（大きいモデル役も軽量モデル役も同じ）。関数ツールを使うレッスンなど、`gpt-5-mini` では動かないレッスンもあります（次の 1-2 を参照）。
+1. **使えるモデルに読み替える（推奨）**。各レッスンはモデル名を `.env` の環境変数に出しているので、値を変えるだけで動きます。読み替え先は `gpt-5-mini` です。ただし、関数ツールを使うレッスンなど `gpt-5-mini` では動かないレッスンや、大小2つのモデルを比べる L1-1 のように読み替えられないレッスンもあります（次の 1-2 を参照）。
 2. **クォータ増加を申請する**。[申請フォーム](https://aka.ms/oai/stuquotarequest) から、サブスクリプション・リージョン・モデル名・希望 TPM を明記します（サブスクリプションの **Owner** か **Contributor** が必要）。申請は「既存クォータを実際に使っている顧客」が優先されるので、**1 で動かしてから出すと通りやすい**です。
 3. **待つ**。ティアは消費実績と支払い履歴に応じて自動昇格します。
 
@@ -94,7 +94,7 @@ az rest --method get `
 
 `gpt-5.1` は Tier 1 以上の表にあります。ティアが上がるのを待つか、クォータ増加を申請してください（上の「対処」の 2・3）。
 
-**読み替え先が無いレッスン（クォータ申請が必要）**
+**読み替え先が無いレッスン（動画で確かめるか、クォータを申請する）**
 
 | レッスン | モデル | 理由 |
 |---|---|---|
