@@ -16,7 +16,7 @@
 
 ## 前提
 - L0-3（Hello, Foundry）を終えていること（講座共通のリソースグループ `rg-ai103`・Foundry リソース・プロジェクト `ai103-project`・Foundry User ロール）。
-- L1-1 でデプロイした `gpt-5.4` を使います（無い場合は、L1-1 の README 手順2でデプロイするか、`gpt-5.4-nano` に読み替え）。
+- L1-1 でデプロイした `gpt-5.4` を使います（無い場合は、L1-1 の README 手順2でデプロイします。最下位のクォータティアで `gpt-5.4` を置けない場合は、`.env.sample` のフォールバックの `gpt-5-mini` に読み替えます）。
 - ロール：クォータの閲覧は、サブスクリプションで **Reader 以上**（最小権限なら **Cognitive Services Usages Reader**）。タグ付与は対象リソースに **Contributor** 以上。
 - **新しいリソースは作りません**。講座共通のリソースにタグを足すだけです。
 
@@ -61,7 +61,7 @@ az cognitiveservices account deployment list `
   --resource-group $RG `
   --query "[].{name:name, model:properties.model.name, sku:sku.name, capacity:sku.capacity}" -o table
 ```
-`gpt-5.4` の行があればOKです。`capacity` はこのデプロイに割り当てたクォータ（単位は千 TPM）で、手順6の消費量と対応します。
+`gpt-5.4` の行があればOKです。`capacity` はこのデプロイに割り当てたクォータ（単位は千 TPM）です。手順6の使用量には、この値に加えて、同じモデルのほかのデプロイ分も合算されます。
 
 ### 3. プロジェクトのエンドポイントを取得する
 ```powershell
@@ -125,7 +125,7 @@ az tag update `
   --tags project=ai103-course env=dev costcenter=training `
   --query "properties.tags" -o json
 ```
-これで、Cost Management の「Cost analysis」でタグ `project` 別にコストを集計できます（反映は最大 24 時間。タグを付ける前の使用量には遡って付きません）。
+これで、Cost Management の「Cost analysis」でタグ `project` 別にコストを集計できます（反映には時間がかかり、従量課金のサブスクリプションでは最大72時間ほどかかります。タグを付ける前の使用量には遡って付きません）。
 
 ## 期待される出力（例）
 `check_quota.py`：

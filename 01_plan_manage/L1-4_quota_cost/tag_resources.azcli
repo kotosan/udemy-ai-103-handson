@@ -30,7 +30,7 @@ az tag list --resource-id $FOUNDRY_ID -o jsonc
 #   Group by = Tag「project」/ または Add filter で Tag=project を選ぶと
 #   タグ別にコストを集計できる。
 # ⚠️ すぐには出ない: タグ別のコストは「タグが付いていた期間の使用量」にだけ付き、
-#    過去分に遡って適用されない。反映にも最大 24 時間かかる。
+#    過去分に遡って適用されない。反映にも時間がかかる（EA/MCA はおおむね 8〜24 時間、従量課金は最大 72 時間）。
 # Foundry プロジェクトには `project` タグが自動付与されるため、
 #   プロジェクト単位の chargeback(プレビュー) は手動タグ無しでも可能。
 #
