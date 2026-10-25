@@ -56,12 +56,12 @@ az rest --method get `
 
 **`.env` のモデル名を `gpt-5-mini` に読み替えれば動くレッスン**
 
-`.env.sample` にフォールバックをコメントで書いてあるレッスンは、コメントを外すだけです。書いていないレッスンは、値を `gpt-5-mini` に書き換えます。`gpt-5-mini` のデプロイは、L1-1 の README「クォータ不足でモデルをデプロイできないとき」の対処1のコマンドで作ります。「講座で確認」の列は、2026-10-23 に `gpt-5-mini` で実行して確かめたレッスンです。
+`.env.sample` にフォールバックをコメントで書いてあるレッスンは、コメントを外すだけです。書いていないレッスンは、値を `gpt-5-mini` に書き換えます。`gpt-5-mini` のデプロイは、L1-1 の README「クォータ不足でモデルをデプロイできないとき」の対処1のコマンドで作ります。「講座で確認」の列は、2026-10-23〜25 に `gpt-5-mini` で実行して確かめたレッスンです。
 
 | レッスン | 既定 | 読み替え先 | 講座で確認 | 補足 |
 |---|---|---|---|---|
 | `00_intro/L0-3_hello_foundry` | `gpt-5.4-nano` | `gpt-5-mini` | 済 | 推論してから答えるので、応答まで十数秒かかる |
-| `01_plan_manage/L1-3_deploy_cicd` | `gpt-5.4-nano`（`deploy_model.azcli`・`main.bicep` でデプロイ） | `gpt-5-mini`（バージョン `2025-08-07`） | − | モデル名とバージョンの両方を書き換える |
+| `01_plan_manage/L1-3_deploy_cicd` | `gpt-5.4-nano`（`deploy_model.azcli`・`main.bicep` でデプロイ） | `gpt-5-mini`（バージョン `2025-08-07`） | 済 | モデル名とバージョンの両方を書き換える（README の「最下位のクォータティアのとき」） |
 | `01_plan_manage/L1-4_quota_cost` | `gpt-5.4` | `gpt-5-mini` | − | |
 | `01_plan_manage/L1-5_keyless_security` | `gpt-5.4` | `gpt-5-mini` | − | |
 | `01_plan_manage/L1-6_observability_tracing` | `gpt-5.4` | `gpt-5-mini` | − | |
