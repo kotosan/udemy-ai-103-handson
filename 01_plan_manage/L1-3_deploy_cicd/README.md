@@ -202,16 +202,6 @@ az cognitiveservices account purge --name $ACCOUNT --resource-group $RG --locati
 - purge には、**サブスクリプション単位**の Contributor（または Cognitive Services Contributor）が必要です。権限が無い場合は purge せず、48時間たてば自動で空きます。
 - purge したリソースは元に戻せません。
 
-## 最下位のクォータティアのとき（`gpt-5-mini` に読み替える）
-
-クォータティアが最下位（Free Tier / Tier 0）のサブスクリプションには、`gpt-5.4-nano` の割り当てがありません（手順7が `insufficient quota` で失敗します。ティアの確かめ方は L0-3 の README の手順2）。その場合は、新しいサブスクリプションでも使える `gpt-5-mini` に読み替えます。**モデル名とバージョンの両方**を書き換えてください。
-
-- 手順6：`query` の `'gpt-5.4-nano'` を `'gpt-5-mini'` にする
-- 手順7：`--model-name gpt-5-mini` と `--model-version "2025-08-07"` にする
-- 手順9・10：`--parameters` の末尾に `modelName=gpt-5-mini modelVersion=2025-08-07` を足す（足さないと、テンプレートの既定値 `gpt-5.4-nano` でデプロイを書き換えようとします）
-
-ほかの手順はそのままです。`.env` の `DEPLOYMENT_NAME` はデプロイ名の `chat` のままで変わりません。詳しくは [FAQ.md](../../FAQ.md) の 1-2 を見てください。
-
 ## CI/CD 雛形（任意・次のレクチャー）
 
 - `github-workflow-sample/evaluate-and-deploy.yml` をリポジトリ直下 `.github/workflows/` にコピーし、OIDC（キーレス）と各リポジトリ変数を設定すると、PR で評価ゲート・main で評価→デプロイが動きます。
@@ -221,3 +211,13 @@ az cognitiveservices account purge --name $ACCOUNT --resource-group $RG --locati
 ## 注意（揮発情報）
 - **モデル名/バージョン・SKU・API バージョン**は変動します。`list-models` と公式ドキュメントで都度確認。
 - `microsoft/ai-agent-evals` は**プレビュー**です（hosted agent 自体は GA）。
+
+## 最下位のクォータティアのとき（`gpt-5-mini` に読み替える）
+
+クォータティアが最下位（Free Tier / Tier 0）のサブスクリプションには、`gpt-5.4-nano` の割り当てがありません（手順7が `insufficient quota` で失敗します。ティアの確かめ方は L0-3 の README の手順2）。その場合は、新しいサブスクリプションでも使える `gpt-5-mini` に読み替えます。**モデル名とバージョンの両方**を書き換えてください。
+
+- 手順6：`query` の `'gpt-5.4-nano'` を `'gpt-5-mini'` にする
+- 手順7：`--model-name gpt-5-mini` と `--model-version "2025-08-07"` にする
+- 手順9・10：`--parameters` の末尾に `modelName=gpt-5-mini modelVersion=2025-08-07` を足す（足さないと、テンプレートの既定値 `gpt-5.4-nano` でデプロイを書き換えようとします）
+
+ほかの手順はそのままです。`.env` の `DEPLOYMENT_NAME` はデプロイ名の `chat` のままで変わりません。詳しくは [FAQ.md](../../FAQ.md) の 1-2 を見てください。
