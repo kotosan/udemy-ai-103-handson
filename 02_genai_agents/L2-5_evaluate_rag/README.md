@@ -6,7 +6,7 @@
 >
 > 認証は**キーレス**（`az login` ＋ `DefaultAzureCredential`）。APIキーは使いません。
 >
-> 評価の取りまとめは**手元（ローカル）**で行い、採点役の呼び出しだけが Azure に行きます（`evaluate()` に `azure_ai_project` を渡していないので、結果は Foundry ポータルには残りません）。
+> 評価の取りまとめは**手元**（ローカル）で行い、採点役の呼び出しだけが Azure に行きます（`evaluate()` に `azure_ai_project` を渡していないので、結果は Foundry ポータルには残りません）。
 
 ## ファイル構成
 | ファイル | 役割 |
